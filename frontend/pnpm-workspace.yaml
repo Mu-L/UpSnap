@@ -1,3 +1,4 @@
 allowBuilds:
   esbuild: true
   svelte-french-toast: true
+  svelte-french-toast@https://codeload.github.com/seriousm4x/svelte-french-toast/tar.gz/fbf89b9952cf11e15174b1841a6eb1ad23770349: true
