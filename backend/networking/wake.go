@@ -11,11 +11,12 @@ import (
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/seriousm4x/upsnap/logger"
+	"github.com/seriousm4x/upsnap/logging"
 )
 
-func WakeDevice(device *core.Record) error {
-	logger.Info.Println("Wake triggered for", device.GetString("name"))
+func WakeDevice(app core.App, device *core.Record) error {
+	log := logging.Logger(app)
+	log.Info("Wake triggered", "device", device.GetString("name"))
 
 	wakeTimeout := device.GetInt("wake_timeout")
 	if wakeTimeout <= 0 {
@@ -57,7 +58,7 @@ func WakeDevice(device *core.Record) error {
 		cmd.Stderr = &stderr
 
 		if err := cmd.Start(); err != nil {
-			logger.Error.Println(err)
+			log.Error("Failed to start wake command", "error", err)
 			return err
 		}
 
@@ -73,20 +74,20 @@ func WakeDevice(device *core.Record) error {
 			case <-time.After(1 * time.Second):
 				if time.Since(start) >= time.Duration(wakeTimeout)*time.Second {
 					if cmd.Process != nil {
-						if err := KillProcess(cmd.Process); err != nil {
-							logger.Error.Println(err)
+						if err := KillProcess(app, cmd.Process); err != nil {
+							log.Error("Failed to kill wake command", "error", err)
 						}
 					}
 					return fmt.Errorf("%s not online after %d seconds", device.GetString("name"), wakeTimeout)
 				}
 				isOnline, err := PingDevice(device)
 				if err != nil {
-					logger.Error.Println(err)
+					log.Error("Failed to ping device after wake", "error", err)
 					return err
 				}
 				if isOnline {
 					if cmd.Process != nil {
-						if err := KillProcess(cmd.Process); err != nil {
+						if err := KillProcess(app, cmd.Process); err != nil {
 							// Process might have already finished
 						}
 					}
@@ -95,8 +96,8 @@ func WakeDevice(device *core.Record) error {
 			case err := <-done:
 				if err != nil {
 					if cmd.Process != nil {
-						if err := KillProcess(cmd.Process); err != nil {
-							logger.Error.Println(err)
+						if err := KillProcess(app, cmd.Process); err != nil {
+							log.Error("Failed to kill wake command", "error", err)
 						}
 					}
 					return fmt.Errorf("%s", stderr.String())
@@ -115,7 +116,7 @@ func WakeDevice(device *core.Record) error {
 			time.Sleep(1 * time.Second)
 			isOnline, err := PingDevice(device)
 			if err != nil {
-				logger.Error.Println(err)
+				log.Error("Failed to ping device after wake", "error", err)
 				return err
 			}
 			if isOnline {

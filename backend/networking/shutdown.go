@@ -11,11 +11,12 @@ import (
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/seriousm4x/upsnap/logger"
+	"github.com/seriousm4x/upsnap/logging"
 )
 
-func ShutdownDevice(device *core.Record) error {
-	logger.Info.Println("Shutdown triggered for", device.GetString("name"))
+func ShutdownDevice(app core.App, device *core.Record) error {
+	log := logging.Logger(app)
+	log.Info("Shutdown triggered", "device", device.GetString("name"))
 	shutdown_cmd := device.GetString("shutdown_cmd")
 	if shutdown_cmd == "" {
 		return fmt.Errorf("%s: no shutdown_cmd definded", device.GetString("name"))
@@ -79,7 +80,7 @@ func ShutdownDevice(device *core.Record) error {
 				for {
 					isOnline, err := PingDevice(device)
 					if err != nil {
-						logger.Error.Println(err)
+						log.Error("Failed to ping device during shutdown", "error", err)
 						return err
 					}
 					if isOnline {
@@ -96,18 +97,18 @@ func ShutdownDevice(device *core.Record) error {
 		default:
 			isOnline, err := PingDevice(device)
 			if err != nil {
-				logger.Error.Println(err)
+				log.Error("Failed to ping device during shutdown", "error", err)
 				return err
 			}
 			if time.Since(start) >= time.Duration(shutdownTimeout)*time.Second {
-				if err := KillProcess(cmd.Process); err != nil {
-					logger.Error.Println(err)
+				if err := KillProcess(app, cmd.Process); err != nil {
+					log.Error("Failed to kill shutdown command", "error", err)
 				}
 				return fmt.Errorf("%s not offline after %d seconds", device.GetString("name"), shutdownTimeout)
 			}
 			if !isOnline {
-				if err := KillProcess(cmd.Process); err != nil {
-					logger.Error.Println(err)
+				if err := KillProcess(app, cmd.Process); err != nil {
+					log.Error("Failed to kill shutdown command", "error", err)
 				}
 				return nil
 			}

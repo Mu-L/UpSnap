@@ -6,7 +6,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/seriousm4x/upsnap/logger"
+	"github.com/pocketbase/pocketbase/core"
+	"github.com/seriousm4x/upsnap/logging"
 	"golang.org/x/sys/unix"
 )
 
@@ -16,8 +17,8 @@ func SetProcessAttributes(cmd *exec.Cmd) {
 }
 
 // Kills child processes on Linux. Windows doesn't provide a direct way to kill child processes, so we kill just the main process.
-func KillProcess(process *os.Process) error {
-	logger.Warning.Println("Your command didn't finish in time. It will be killed.")
+func KillProcess(app core.App, process *os.Process) error {
+	logging.Logger(app).Warn("Command did not finish in time and will be killed")
 	pgid, err := unix.Getpgid(process.Pid)
 	if err != nil {
 		return err

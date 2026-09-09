@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/seriousm4x/upsnap/logger"
+	"github.com/seriousm4x/upsnap/logging"
 	"github.com/seriousm4x/upsnap/networking"
 )
 
@@ -31,6 +31,7 @@ var nmapScan = networking.NmapScan
 // still be updated by another subnet's scan that finds their mac address,
 // as long as the new ip stays within the device's own subnet.
 func TrackAllSubnets(app core.App) {
+	log := logging.Logger(app)
 	// skip if the previous sweep is still running
 	if !sweepRunning.CompareAndSwap(false, true) {
 		return
@@ -39,7 +40,7 @@ func TrackAllSubnets(app core.App) {
 
 	devices, err := app.FindRecordsByFilter("devices", "track_ip = true", "", 0, 0)
 	if err != nil {
-		logger.Error.Println(err)
+		log.Error("Failed to load devices for IP tracking", "error", err)
 		return
 	}
 
@@ -48,7 +49,7 @@ func TrackAllSubnets(app core.App) {
 	for _, device := range devices {
 		subnet, err := networking.DeviceSubnet(device.GetString("ip"), device.GetString("netmask"))
 		if err != nil {
-			logger.Error.Println("Ip tracking for", device.GetString("name")+":", err)
+			log.Error("Failed to determine device subnet for IP tracking", "device", device.GetString("name"), "error", err)
 			continue
 		}
 		if networking.ValidateScannableSubnet(subnet) != nil {
@@ -59,7 +60,7 @@ func TrackAllSubnets(app core.App) {
 
 	for cidr, subnet := range subnets {
 		if err := TrackOneSubnet(app, subnet); err != nil {
-			logger.Error.Println("Ip tracking scan for", cidr+":", err)
+			log.Error("IP tracking scan failed", "subnet", cidr, "error", err)
 		}
 	}
 }
@@ -89,6 +90,7 @@ func CatchUpSweep(app core.App) {
 // address of any ip-tracked device whose mac address is found at a new
 // address within its own subnet. Returns an error for a non-scannable subnet.
 func TrackOneSubnet(app core.App, subnet *net.IPNet) error {
+	log := logging.Logger(app)
 	if err := networking.ValidateScannableSubnet(subnet); err != nil {
 		return err
 	}
@@ -119,13 +121,13 @@ func TrackOneSubnet(app core.App, subnet *net.IPNet) error {
 		if err != nil || !deviceSubnet.Contains(net.ParseIP(newIp)) {
 			continue
 		}
-		logger.Info.Println("Ip tracking: updating", device.GetString("name"), "from", device.GetString("ip"), "to", newIp)
+		log.Info("Updating tracked device IP", "device", device.GetString("name"), "from", device.GetString("ip"), "to", newIp)
 		device.Set("ip", newIp)
 		// only write the changed ip field to avoid clobbering concurrent
 		// status updates from the ping and wake/shutdown cronjobs
 		device.IgnoreUnchangedFields(true)
 		if err := app.Save(device); err != nil {
-			logger.Error.Println("Failed to save record:", err)
+			log.Error("Failed to save tracked device IP", "device", device.GetString("name"), "error", err)
 		}
 	}
 	return nil

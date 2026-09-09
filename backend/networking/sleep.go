@@ -8,15 +8,15 @@ import (
 	"net/http"
 
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/seriousm4x/upsnap/logger"
+	"github.com/seriousm4x/upsnap/logging"
 )
 
 type SolResponse struct {
 	Message string `json:"message"`
 }
 
-func SleepDevice(device *core.Record) (SolResponse, error) {
-	logger.Info.Println("Sleep triggered for", device.GetString("name"))
+func SleepDevice(app core.App, device *core.Record) (SolResponse, error) {
+	logging.Logger(app).Info("Sleep triggered", "device", device.GetString("name"))
 
 	var solResp SolResponse
 	var url string

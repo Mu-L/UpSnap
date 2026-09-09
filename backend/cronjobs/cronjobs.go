@@ -4,7 +4,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/robfig/cron/v3"
 	"github.com/seriousm4x/upsnap/iptracking"
-	"github.com/seriousm4x/upsnap/logger"
+	"github.com/seriousm4x/upsnap/logging"
 	"github.com/seriousm4x/upsnap/networking"
 )
 
@@ -20,6 +20,7 @@ var (
 )
 
 func SetPingJobs(app core.App) {
+	log := logging.Logger(app)
 	// remove existing jobs
 	for _, job := range CronPing.Entries() {
 		CronPing.Remove(job.ID)
@@ -27,7 +28,8 @@ func SetPingJobs(app core.App) {
 
 	settingsPrivateRecords, err := app.FindAllRecords("settings_private")
 	if err != nil {
-		logger.Error.Println(err)
+		log.Error("Failed to load private settings", "error", err)
+		return
 	}
 
 	CronPing.AddFunc(settingsPrivateRecords[0].GetString("interval"), func() {
@@ -39,7 +41,7 @@ func SetPingJobs(app core.App) {
 
 		devices, err := app.FindAllRecords("devices")
 		if err != nil {
-			logger.Error.Println(err)
+			log.Error("Failed to load devices for ping job", "error", err)
 			return
 		}
 
@@ -49,6 +51,7 @@ func SetPingJobs(app core.App) {
 		}
 		merr := app.ExpandRecords(devices, []string{"ports"}, expandFetchFunc)
 		if len(merr) > 0 {
+			log.Error("Failed to expand device ports", "errors", merr)
 			return
 		}
 
@@ -61,7 +64,7 @@ func SetPingJobs(app core.App) {
 				}
 				isUp, err := networking.PingDevice(d)
 				if err != nil {
-					logger.Error.Println(err)
+					log.Error("Failed to ping device", "device", d.GetString("name"), "error", err)
 				}
 				if isUp {
 					if status == "online" {
@@ -69,7 +72,7 @@ func SetPingJobs(app core.App) {
 					}
 					d.Set("status", "online")
 					if err := app.Save(d); err != nil {
-						logger.Error.Println("Failed to save record:", err)
+						log.Error("Failed to save device status", "device", d.GetString("name"), "error", err)
 					}
 				} else {
 					if status == "offline" {
@@ -77,7 +80,7 @@ func SetPingJobs(app core.App) {
 					}
 					d.Set("status", "offline")
 					if err := app.Save(d); err != nil {
-						logger.Error.Println("Failed to save record:", err)
+						log.Error("Failed to save device status", "device", d.GetString("name"), "error", err)
 					}
 				}
 			}(device)
@@ -86,17 +89,18 @@ func SetPingJobs(app core.App) {
 			go func(d *core.Record) {
 				ports, err := app.FindRecordsByIds("ports", d.GetStringSlice("ports"))
 				if err != nil {
-					logger.Error.Println(err)
+					log.Error("Failed to load device ports", "device", d.GetString("name"), "error", err)
+					return
 				}
 				for _, port := range ports {
 					isUp, err := networking.CheckPort(d.GetString("ip"), port.GetString("number"))
 					if err != nil {
-						logger.Error.Println("Failed to check port:", err)
+						log.Error("Failed to check port", "device", d.GetString("name"), "port", port.GetString("number"), "error", err)
 					}
 					if isUp != port.GetBool("status") {
 						port.Set("status", isUp)
 						if err := app.Save(port); err != nil {
-							logger.Error.Println("Failed to save record:", err)
+							log.Error("Failed to save port status", "device", d.GetString("name"), "port", port.GetString("number"), "error", err)
 						}
 					}
 				}
@@ -113,12 +117,13 @@ func SetPingJobs(app core.App) {
 			realtimeClients := len(app.SubscriptionsBroker().Clients())
 			iptracking.PeriodicSweep(app, realtimeClients == 0 && settingsPrivateRecords[0].GetBool("lazy_ping"))
 		}); err != nil {
-			logger.Error.Println("Failed to add ip tracking cronjob:", err)
+			log.Error("Failed to add IP tracking cron job", "error", err)
 		}
 	}
 }
 
 func SetWakeShutdownJobs(app core.App) {
+	log := logging.Logger(app)
 	// remove existing jobs
 	for _, job := range CronWakeShutdown.Entries() {
 		CronWakeShutdown.Remove(job.ID)
@@ -126,7 +131,7 @@ func SetWakeShutdownJobs(app core.App) {
 
 	devices, err := app.FindAllRecords("devices")
 	if err != nil {
-		logger.Error.Println(err)
+		log.Error("Failed to load devices for wake and shutdown jobs", "error", err)
 		return
 	}
 	for _, dev := range devices {
@@ -139,7 +144,7 @@ func SetWakeShutdownJobs(app core.App) {
 			_, err := CronWakeShutdown.AddFunc(wake_cron, func() {
 				d, err := app.FindRecordById("devices", dev.Id)
 				if err != nil {
-					logger.Error.Println(err)
+					log.Error("Failed to load device for wake job", "device", dev.GetString("name"), "error", err)
 					return
 				}
 				if d.GetString("status") == "pending" {
@@ -147,7 +152,7 @@ func SetWakeShutdownJobs(app core.App) {
 				}
 				isOnline, err := networking.PingDevice(d)
 				if err != nil {
-					logger.Error.Println(err)
+					log.Error("Failed to ping device before wake", "device", d.GetString("name"), "error", err)
 					return
 				}
 				if isOnline {
@@ -155,21 +160,21 @@ func SetWakeShutdownJobs(app core.App) {
 				}
 				d.Set("status", "pending")
 				if err := app.Save(d); err != nil {
-					logger.Error.Println("Failed to save record:", err)
+					log.Error("Failed to save pending device status", "device", d.GetString("name"), "error", err)
 					return
 				}
-				if err := networking.WakeDevice(d); err != nil {
-					logger.Error.Println(err)
+				if err := networking.WakeDevice(app, d); err != nil {
+					log.Error("Wake job failed", "device", d.GetString("name"), "error", err)
 					d.Set("status", "offline")
 				} else {
 					d.Set("status", "online")
 				}
 				if err := app.Save(d); err != nil {
-					logger.Error.Println("Failed to save record:", err)
+					log.Error("Failed to save device status after wake", "device", d.GetString("name"), "error", err)
 				}
 			})
 			if err != nil {
-				logger.Error.Printf("device %s: %+v", dev.GetString("name"), err)
+				log.Error("Failed to add wake cron job", "device", dev.GetString("name"), "error", err)
 			}
 		}
 
@@ -177,7 +182,7 @@ func SetWakeShutdownJobs(app core.App) {
 			_, err := CronWakeShutdown.AddFunc(shutdown_cron, func() {
 				d, err := app.FindRecordById("devices", dev.Id)
 				if err != nil {
-					logger.Error.Println(err)
+					log.Error("Failed to load device for shutdown job", "device", dev.GetString("name"), "error", err)
 					return
 				}
 				if d.GetString("status") == "pending" {
@@ -185,7 +190,7 @@ func SetWakeShutdownJobs(app core.App) {
 				}
 				isOnline, err := networking.PingDevice(d)
 				if err != nil {
-					logger.Error.Println(err)
+					log.Error("Failed to ping device before shutdown", "device", d.GetString("name"), "error", err)
 					return
 				}
 				if !isOnline {
@@ -197,20 +202,20 @@ func SetWakeShutdownJobs(app core.App) {
 				}
 				d.Set("status", "pending")
 				if err := app.Save(d); err != nil {
-					logger.Error.Println("Failed to save record:", err)
+					log.Error("Failed to save pending device status", "device", d.GetString("name"), "error", err)
 				}
-				if err := networking.ShutdownDevice(d); err != nil {
-					logger.Error.Println(err)
+				if err := networking.ShutdownDevice(app, d); err != nil {
+					log.Error("Shutdown job failed", "device", d.GetString("name"), "error", err)
 					d.Set("status", "online")
 				} else {
 					d.Set("status", "offline")
 				}
 				if err := app.Save(d); err != nil {
-					logger.Error.Println("Failed to save record:", err)
+					log.Error("Failed to save device status after shutdown", "device", d.GetString("name"), "error", err)
 				}
 			})
 			if err != nil {
-				logger.Error.Printf("device %s: %+v", dev.GetString("name"), err)
+				log.Error("Failed to add shutdown cron job", "device", dev.GetString("name"), "error", err)
 			}
 		}
 	}
@@ -222,9 +227,9 @@ func StartWakeShutdown() {
 
 }
 
-func StopWakeShutdown() {
+func StopWakeShutdown(app core.App) {
 	if WakeShutdownRunning {
-		logger.Info.Println("Stopping wake/shutdown cronjob")
+		logging.Logger(app).Info("Stopping wake and shutdown cron jobs")
 		CronWakeShutdown.Stop()
 	}
 	WakeShutdownRunning = false
@@ -235,15 +240,15 @@ func StartPing() {
 	go CronPing.Run()
 }
 
-func StopPing() {
+func StopPing(app core.App) {
 	if PingRunning {
-		logger.Info.Println("Stopping wake/shutdown cronjob")
+		logging.Logger(app).Info("Stopping ping cron jobs")
 		CronPing.Stop()
 	}
 	PingRunning = false
 }
 
-func StopAll() {
-	StopPing()
-	StopWakeShutdown()
+func StopAll(app core.App) {
+	StopPing(app)
+	StopWakeShutdown(app)
 }

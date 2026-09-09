@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/pocketbase/pocketbase/core"
+
 	"golang.org/x/sys/windows"
 )
 
@@ -13,6 +15,6 @@ import (
 func SetProcessAttributes(cmd *exec.Cmd) {}
 
 // Kills child processes on Linux. Windows doesn't provide a direct way to kill child processes, so we kill just the main process.
-func KillProcess(process *os.Process) error {
+func KillProcess(_ core.App, process *os.Process) error {
 	return windows.GenerateConsoleCtrlEvent(windows.CTRL_BREAK_EVENT, uint32(process.Pid))
 }

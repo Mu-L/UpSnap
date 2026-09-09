@@ -17,20 +17,24 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/seriousm4x/upsnap/cronjobs"
 	"github.com/seriousm4x/upsnap/iptracking"
-	"github.com/seriousm4x/upsnap/logger"
+	"github.com/seriousm4x/upsnap/logging"
 	_ "github.com/seriousm4x/upsnap/migrations"
 )
 
 var Version = "(untracked)"
 
-func StartPocketBase(distDirFS fs.FS) {
+func StartPocketBase(distDirFS fs.FS) error {
+	if err := logging.ConfigureConsole(os.Getenv("UPSNAP_LOG_LEVEL")); err != nil {
+		return err
+	}
+
 	// set data dir
 	// use "./pb_data" if it's in the same dir as upsnap binary
 	// else use os.UserConfigDir() / upsnap
 	var dataDir string
 	baseDir, err := os.Getwd()
 	if err != nil {
-		logger.Error.Fatalln(err)
+		return err
 	}
 	pb_data := path.Join(baseDir, "pb_data")
 	if _, err = os.Stat(pb_data); err == nil {
@@ -38,14 +42,14 @@ func StartPocketBase(distDirFS fs.FS) {
 	} else if os.IsNotExist(err) {
 		userConfigDir, err := os.UserConfigDir()
 		if err != nil {
-			logger.Error.Fatalln(err)
+			return err
 		}
 		upsnap_data := path.Join(userConfigDir, "upsnap")
 		if _, err = os.Stat(upsnap_data); err == nil {
 			dataDir = upsnap_data
 		} else if os.IsNotExist(err) {
 			if err := os.MkdirAll(upsnap_data, 0700); err != nil {
-				logger.Error.Fatalln(err)
+				return err
 			}
 		}
 	}
@@ -149,7 +153,7 @@ func StartPocketBase(distDirFS fs.FS) {
 				return e.Next()
 			}
 			if err := setSetupCompleted(e.App); err != nil {
-				logger.Error.Println(err)
+				logging.Logger(e.App).Error("Failed to update setup state", "error", err)
 				return err
 			}
 			return e.Next()
@@ -162,7 +166,7 @@ func StartPocketBase(distDirFS fs.FS) {
 			permissionRec, err := app.FindFirstRecordByFilter("permissions",
 				fmt.Sprintf("user.id = '%s'", userId))
 			if err != nil && err.Error() != "sql: no rows in result set" {
-				logger.Error.Println(err)
+				logging.Logger(e.App).Error("Failed to load permissions for new device", "error", err)
 				return err
 			} else if permissionRec != nil {
 				permissionRec.Set("read", append(permissionRec.GetStringSlice("read"), deviceRec.Id))
@@ -170,7 +174,7 @@ func StartPocketBase(distDirFS fs.FS) {
 				permissionRec.Set("delete", append(permissionRec.GetStringSlice("delete"), deviceRec.Id))
 				permissionRec.Set("power", append(permissionRec.GetStringSlice("power"), deviceRec.Id))
 				if err := app.Save(permissionRec); err != nil {
-					logger.Error.Println(err)
+					logging.Logger(e.App).Error("Failed to grant permissions for new device", "error", err)
 					return err
 				}
 			}
@@ -180,7 +184,7 @@ func StartPocketBase(distDirFS fs.FS) {
 
 	app.OnModelAfterDeleteSuccess("_superusers").BindFunc(func(e *core.ModelEvent) error {
 		if err := setSetupCompleted(e.App); err != nil {
-			logger.Error.Println(err)
+			logging.Logger(e.App).Error("Failed to update setup state", "error", err)
 			return err
 		}
 		return e.Next()
@@ -189,7 +193,7 @@ func StartPocketBase(distDirFS fs.FS) {
 	app.OnRecordValidate("devices").BindFunc(func(e *core.RecordEvent) error {
 		ip := net.ParseIP(e.Record.GetString("netmask"))
 		if ip == nil {
-			logger.Warning.Println("device", e.Record.GetString("name"), "does not contain a valid netmask! Will be set to 255.255.255.255")
+			logging.Logger(e.App).Warn("Device has invalid netmask; using broadcast default", "device", e.Record.GetString("name"), "netmask", "255.255.255.255")
 			e.Record.Set("netmask", "255.255.255.255")
 			saveErr := e.App.Save(e.Record)
 			if saveErr != nil {
@@ -204,7 +208,7 @@ func StartPocketBase(distDirFS fs.FS) {
 		// was skipped while nobody was connected
 		settings, err := e.App.FindFirstRecordByFilter("settings_private", "")
 		if err != nil {
-			logger.Error.Println(err)
+			logging.Logger(e.App).Error("Failed to load private settings on realtime connection", "error", err)
 		} else if settings.GetBool("lazy_ping") && settings.GetString("track_ip_interval") != "" {
 			go iptracking.CatchUpSweep(e.App)
 		}
@@ -230,13 +234,13 @@ func StartPocketBase(distDirFS fs.FS) {
 				}
 				allDevices, err := app.FindAllRecords("devices", dbx.NewExp("shutdown_cmd != ''"))
 				if err != nil {
-					logger.Error.Println(err)
+					logging.Logger(app).Error("Failed to load devices for offline transition", "error", err)
 					return
 				}
 				for _, device := range allDevices {
 					device.Set("status", "offline")
 					if err := app.Save(device); err != nil {
-						logger.Error.Println(err)
+						logging.Logger(app).Error("Failed to save offline device status", "device", device.GetString("name"), "error", err)
 						return
 					}
 				}
@@ -246,7 +250,7 @@ func StartPocketBase(distDirFS fs.FS) {
 	})
 
 	app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
-		cronjobs.StopAll()
+		cronjobs.StopAll(e.App)
 		return e.Next()
 	})
 
@@ -254,20 +258,21 @@ func StartPocketBase(distDirFS fs.FS) {
 	httpListen := os.Getenv("UPSNAP_HTTP_LISTEN")
 	if httpListen != "" {
 		if err := app.Bootstrap(); err != nil {
-			logger.Error.Fatalln(err)
+			return err
 		}
 		if err := apis.Serve(app, apis.ServeConfig{
 			HttpAddr:        httpListen,
 			ShowStartBanner: true,
 		}); err != nil {
-			logger.Error.Fatalln(err)
+			return err
 		}
 	} else {
 		if err := app.Start(); err != nil {
-			logger.Error.Fatalln(err)
+			return err
 		}
 	}
 
+	return nil
 }
 
 func importSettings(app core.App) error {
@@ -316,12 +321,10 @@ func importSettings(app core.App) error {
 		if interval == "*/3 * * * *" || interval == "@every 3s" {
 			settingsPrivate.Set("interval", defaultInterval)
 			if e := app.Save(settingsPrivate); e != nil {
-				logger.Error.Println(e)
+				logging.Logger(app).Error("Failed to save default ping interval", "error", e)
 			}
 		} else {
-			logger.Error.Printf("'%s' ping interval is not valid.\n", interval)
-			logger.Error.Println("Please go to '/settings/' and change your ping interval.")
-			logger.Error.Println("Falling back to default interval: " + defaultInterval)
+			logging.Logger(app).Error("Invalid ping interval; using default", "interval", interval, "default", defaultInterval)
 		}
 		interval = defaultInterval
 	}
@@ -342,7 +345,7 @@ func importSettings(app core.App) error {
 		return err
 	}
 	if err := setSetupCompleted(app); err != nil {
-		logger.Error.Println(err)
+		logging.Logger(app).Error("Failed to update setup state", "error", err)
 		return err
 	}
 

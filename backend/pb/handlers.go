@@ -13,7 +13,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/router"
 	"github.com/robfig/cron/v3"
-	"github.com/seriousm4x/upsnap/logger"
+	"github.com/seriousm4x/upsnap/logging"
 	"github.com/seriousm4x/upsnap/networking"
 )
 
@@ -25,22 +25,22 @@ func HandlerWake(e *core.RequestEvent) error {
 
 	record.Set("status", "pending")
 	if err := e.App.Save(record); err != nil {
-		logger.Error.Println("Failed to save record:", err)
+		logging.Logger(e.App).Error("Failed to save pending device status", "device", record.GetString("name"), "error", err)
 	}
 
 	if err := asyncCall(e, func() *router.ApiError {
-		if err := networking.WakeDevice(record); err != nil {
-			logger.Error.Println(err)
+		if err := networking.WakeDevice(e.App, record); err != nil {
+			logging.Logger(e.App).Error("Failed to wake device", "device", record.GetString("name"), "error", err)
 			record.Set("status", "offline")
 			if err := e.App.Save(record); err != nil {
-				logger.Error.Println("Failed to save record:", err)
+				logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 			}
 			return apis.NewBadRequestError(err.Error(), nil)
 		}
 
 		record.Set("status", "online")
 		if err := e.App.Save(record); err != nil {
-			logger.Error.Println("Failed to save record:", err)
+			logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 		}
 
 		return nil
@@ -59,23 +59,23 @@ func HandlerSleep(e *core.RequestEvent) error {
 
 	record.Set("status", "pending")
 	if err := e.App.Save(record); err != nil {
-		logger.Error.Println("Failed to save record:", err)
+		logging.Logger(e.App).Error("Failed to save pending device status", "device", record.GetString("name"), "error", err)
 	}
 
 	if err := asyncCall(e, func() *router.ApiError {
-		resp, err := networking.SleepDevice(record)
+		resp, err := networking.SleepDevice(e.App, record)
 		if err != nil {
-			logger.Error.Println(err)
+			logging.Logger(e.App).Error("Failed to sleep device", "device", record.GetString("name"), "error", err)
 			record.Set("status", "online")
 			if err := e.App.Save(record); err != nil {
-				logger.Error.Println("Failed to save record:", err)
+				logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 			}
 			return apis.NewBadRequestError(resp.Message, nil)
 		}
 
 		record.Set("status", "offline")
 		if err := e.App.Save(record); err != nil {
-			logger.Error.Println("Failed to save record:", err)
+			logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 		}
 
 		return nil
@@ -94,15 +94,15 @@ func HandlerReboot(e *core.RequestEvent) error {
 
 	record.Set("status", "pending")
 	if err := e.App.Save(record); err != nil {
-		logger.Error.Println("Failed to save record:", err)
+		logging.Logger(e.App).Error("Failed to save pending device status", "device", record.GetString("name"), "error", err)
 	}
 
 	if err := asyncCall(e, func() *router.ApiError {
-		if err := networking.ShutdownDevice(record); err != nil {
-			logger.Error.Println(err)
+		if err := networking.ShutdownDevice(e.App, record); err != nil {
+			logging.Logger(e.App).Error("Failed to shut down device for reboot", "device", record.GetString("name"), "error", err)
 			record.Set("status", "online")
 			if err := e.App.Save(record); err != nil {
-				logger.Error.Println("Failed to save record:", err)
+				logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 			}
 			return apis.NewBadRequestError(err.Error(), nil)
 		}
@@ -112,18 +112,18 @@ func HandlerReboot(e *core.RequestEvent) error {
 		// so we wait a little to make sure the device has shut down completely and is ready to receive wake requests.
 		time.Sleep(15 * time.Second)
 
-		if err := networking.WakeDevice(record); err != nil {
-			logger.Error.Println(err)
+		if err := networking.WakeDevice(e.App, record); err != nil {
+			logging.Logger(e.App).Error("Failed to wake device after reboot", "device", record.GetString("name"), "error", err)
 			record.Set("status", "offline")
 			if err := e.App.Save(record); err != nil {
-				logger.Error.Println("Failed to save record:", err)
+				logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 			}
 			return apis.NewBadRequestError(err.Error(), nil)
 		}
 
 		record.Set("status", "online")
 		if err := e.App.Save(record); err != nil {
-			logger.Error.Println("Failed to save record:", err)
+			logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 		}
 
 		return nil
@@ -142,22 +142,22 @@ func HandlerShutdown(e *core.RequestEvent) error {
 
 	record.Set("status", "pending")
 	if err := e.App.Save(record); err != nil {
-		logger.Error.Println("Failed to save record:", err)
+		logging.Logger(e.App).Error("Failed to save pending device status", "device", record.GetString("name"), "error", err)
 	}
 
 	if err := asyncCall(e, func() *router.ApiError {
-		if err := networking.ShutdownDevice(record); err != nil {
-			logger.Error.Println(strings.ReplaceAll(err.Error(), "\n", ""))
+		if err := networking.ShutdownDevice(e.App, record); err != nil {
+			logging.Logger(e.App).Error("Failed to shut down device", "device", record.GetString("name"), "error", strings.ReplaceAll(err.Error(), "\n", ""))
 			record.Set("status", "online")
 			if err := e.App.Save(record); err != nil {
-				logger.Error.Println("Failed to save record:", err)
+				logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 			}
 			return apis.NewBadRequestError(err.Error(), nil)
 		}
 
 		record.Set("status", "offline")
 		if err := e.App.Save(record); err != nil {
-			logger.Error.Println("Failed to save record:", err)
+			logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 		}
 
 		return nil
@@ -180,21 +180,21 @@ func HandlerWakeGroup(e *core.RequestEvent) error {
 		go func() {
 			record.Set("status", "pending")
 			if err := e.App.Save(record); err != nil {
-				logger.Error.Println("Failed to save record:", err)
+				logging.Logger(e.App).Error("Failed to save pending device status", "device", record.GetString("name"), "error", err)
 			}
 
-			if err := networking.WakeDevice(record); err != nil {
-				logger.Error.Println(err)
+			if err := networking.WakeDevice(e.App, record); err != nil {
+				logging.Logger(e.App).Error("Failed to wake device", "device", record.GetString("name"), "error", err)
 				record.Set("status", "offline")
 				if err := e.App.Save(record); err != nil {
-					logger.Error.Println("Failed to save record:", err)
+					logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 				}
 				return
 			}
 
 			record.Set("status", "online")
 			if err := e.App.Save(record); err != nil {
-				logger.Error.Println("Failed to save record:", err)
+				logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 			}
 		}()
 	}
@@ -214,21 +214,21 @@ func HandlerShutdownGroup(e *core.RequestEvent) error {
 		go func() {
 			record.Set("status", "pending")
 			if err := e.App.Save(record); err != nil {
-				logger.Error.Println("Failed to save record:", err)
+				logging.Logger(e.App).Error("Failed to save pending device status", "device", record.GetString("name"), "error", err)
 			}
 
-			if err := networking.ShutdownDevice(record); err != nil {
-				logger.Error.Println(err)
+			if err := networking.ShutdownDevice(e.App, record); err != nil {
+				logging.Logger(e.App).Error("Failed to shut down device", "device", record.GetString("name"), "error", err)
 				record.Set("status", "online")
 				if err := e.App.Save(record); err != nil {
-					logger.Error.Println("Failed to save record:", err)
+					logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 				}
 				return
 			}
 
 			record.Set("status", "offline")
 			if err := e.App.Save(record); err != nil {
-				logger.Error.Println("Failed to save record:", err)
+				logging.Logger(e.App).Error("Failed to save device status", "device", record.GetString("name"), "error", err)
 			}
 		}()
 	}
@@ -294,7 +294,7 @@ func HandlerValidateCron(e *core.RequestEvent) error {
 	var body ValidateCronRequest
 
 	if err := e.BindBody(&body); err != nil {
-		logger.Error.Println(err)
+		logging.Logger(e.App).Error("Failed to bind cron validation request", "error", err)
 		return e.BadRequestError("invalid request", err)
 	}
 
