@@ -218,7 +218,7 @@
 			onclick={() => (mobileFiltersOpen = !mobileFiltersOpen)}
 		>
 			<Fa icon={faFilter} />
-			<span class="text-base-content/60 min-w-0 flex-1 truncate text-left font-normal">
+			<span class="text-base-content/60 flex-1 truncate text-left font-normal">
 				{m.logs_filters()}
 			</span>
 			<Fa icon={mobileFiltersOpen ? faChevronUp : faChevronDown} />
@@ -242,14 +242,14 @@
 
 					<fieldset class="fieldset gap-1">
 						<legend class="fieldset-legend">{m.logs_device_logs()}</legend>
-						<label class="label cursor-pointer justify-start gap-2 py-1">
+						<label class="label gap-2 py-1">
 							<input
 								type="checkbox"
 								class="toggle toggle-sm"
 								bind:checked={onlyDeviceLogs}
 								onchange={updateQuery}
 							/>
-							<span class="label-text text-sm">{m.logs_only()}</span>
+							<span class="text-sm">{m.logs_only()}</span>
 						</label>
 					</fieldset>
 
@@ -276,7 +276,7 @@
 	</section>
 
 	<section class="card card-border bg-base-100 hidden xl:block">
-		<div class="flex flex-nowrap items-end gap-3 p-4">
+		<div class="flex items-end gap-3 p-4">
 			<fieldset class="fieldset shrink-0">
 				<legend class="fieldset-legend">{m.logs_column_level()}</legend>
 				<select class="select w-auto" bind:value={selectedLevel} onchange={updateQuery}>
@@ -286,7 +286,7 @@
 				</select>
 			</fieldset>
 
-			<fieldset class="fieldset min-w-0 flex-1">
+			<fieldset class="fieldset flex-1">
 				<legend class="fieldset-legend">{m.logs_column_message()}</legend>
 				<input
 					class="input w-full"
@@ -298,16 +298,14 @@
 
 			<fieldset class="fieldset flex! shrink-0 flex-col self-stretch">
 				<legend class="fieldset-legend">{m.logs_device_logs()}</legend>
-				<label
-					class="label flex! flex-1 cursor-pointer items-center justify-start gap-3 whitespace-nowrap"
-				>
+				<label class="label flex-1 gap-3">
 					<input
 						type="checkbox"
 						class="toggle"
 						bind:checked={onlyDeviceLogs}
 						onchange={updateQuery}
 					/>
-					<span class="label-text">{m.logs_only()}</span>
+					<span>{m.logs_only()}</span>
 				</label>
 			</fieldset>
 
@@ -329,7 +327,7 @@
 		</div>
 	{/if}
 
-	<section class="card card-border bg-base-100 min-w-0 overflow-hidden">
+	<section class="card card-border bg-base-100 overflow-hidden">
 		{#if loading}
 			<div class="flex min-h-64 items-center justify-center">
 				<span class="loading loading-spinner loading-lg"></span>
@@ -341,9 +339,9 @@
 		{:else}
 			<div class="hidden md:block">
 				<div class="border-base-300 flex border-b text-sm font-bold">
-					<div class="w-32 shrink-0 px-3 py-3">{m.logs_column_level()}</div>
+					<div class="w-32 shrink-0 p-3">{m.logs_column_level()}</div>
 					<button
-						class="hover:bg-base-300 flex min-w-0 flex-1 items-center gap-1 px-3 py-3 text-left"
+						class="hover:bg-base-300 flex flex-1 items-center gap-1 p-3 text-left"
 						onclick={() => toggleSort('message')}
 					>
 						{m.logs_column_message()}
@@ -352,7 +350,7 @@
 							/>{/if}
 					</button>
 					<button
-						class="hover:bg-base-300 flex w-40 shrink-0 items-center gap-1 px-3 py-3 text-left"
+						class="hover:bg-base-300 flex w-40 shrink-0 items-center gap-1 p-3 text-left"
 						onclick={() => toggleSort('created')}
 					>
 						{m.logs_column_time()}
@@ -369,12 +367,12 @@
 							class="hover:bg-base-200 flex w-full cursor-pointer items-start text-left"
 							onclick={() => showDetails(entry)}
 						>
-							<div class="w-32 shrink-0 px-3 py-3">
+							<div class="w-32 shrink-0 p-3">
 								<span class="badge bg-base-300 badge-sm gap-1.5 border-0 font-semibold"
 									><span class={`size-2 rounded-full ${meta.dotClass}`}></span>{meta.label}</span
 								>
 							</div>
-							<div class="min-w-0 flex-1 px-3 py-3">
+							<div class="flex-1 p-3">
 								<p class="text-xs wrap-break-word whitespace-pre-wrap">{entry.message}</p>
 								{#if hasData(entry)}
 									<div class="mt-1 flex flex-wrap gap-1">
@@ -389,7 +387,7 @@
 									</div>
 								{/if}
 							</div>
-							<time class="w-40 shrink-0 px-3 py-3 text-xs whitespace-nowrap"
+							<time class="w-40 shrink-0 p-3 text-xs whitespace-nowrap"
 								>{new Date(entry.created).toLocaleString()}</time
 							>
 						</button>
@@ -464,9 +462,9 @@
 		{#if selectedLog}
 			{@const meta = levelMeta(selectedLog.level)}
 			<h2 class="text-lg font-bold">{m.logs_column_data()}</h2>
-			<dl class="mt-4 grid items-center gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
+			<dl class="mt-4 grid items-center gap-x-6 gap-y-2 text-xs sm:grid-cols-[auto_1fr]">
 				<dt class="text-base-content/60">ID</dt>
-				<dd class="text-xs break-all">{selectedLog.id}</dd>
+				<dd class="break-all">{selectedLog.id}</dd>
 				<dt class="text-base-content/60">{m.logs_column_level()}</dt>
 				<dd>
 					<span class="badge bg-base-300 badge-sm gap-1.5 border-0 font-semibold"
@@ -474,7 +472,7 @@
 					>
 				</dd>
 				<dt class="text-base-content/60">{m.logs_column_message()}</dt>
-				<dd class="font-mono text-xs wrap-break-word whitespace-pre-wrap">{selectedLog.message}</dd>
+				<dd class="wrap-break-word whitespace-pre-wrap">{selectedLog.message}</dd>
 				<dt class="text-base-content/60">{m.logs_column_time()}</dt>
 				<dd>{new Date(selectedLog.created).toLocaleString()}</dd>
 			</dl>
