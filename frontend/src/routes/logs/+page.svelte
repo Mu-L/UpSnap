@@ -107,7 +107,11 @@
 			if (selectedLevel) filters.push(`level = ${selectedLevel}`);
 			if (onlyDeviceLogs) filters.push('data.device != null');
 			if (textSearch.trim()) {
-				filters.push($pocketbase.filter('message ~ {:search}', { search: textSearch.trim() }));
+				filters.push(
+					$pocketbase.filter('(level ?~ {:search} || message ?~ {:search} || data ?~ {:search})', {
+						search: textSearch.trim()
+					})
+				);
 			}
 			const result = await $pocketbase.logs.getList(currentPage, perPage, {
 				sort,
@@ -172,10 +176,6 @@
 		};
 	});
 </script>
-
-<svelte:head>
-	<title>{m.logs_page_title()} | UpSnap</title>
-</svelte:head>
 
 <main class="container mx-auto flex flex-col gap-4 p-4">
 	<header class="flex flex-col justify-between gap-3 md:flex-row md:items-end">
@@ -375,7 +375,7 @@
 								>
 							</div>
 							<div class="min-w-0 flex-1 px-3 py-3">
-								<p class="font-mono text-xs wrap-break-word whitespace-pre-wrap">{entry.message}</p>
+								<p class="text-xs wrap-break-word whitespace-pre-wrap">{entry.message}</p>
 								{#if hasData(entry)}
 									<div class="mt-1 flex flex-wrap gap-1">
 										{#each dataEntries(entry) as [key, value] (key)}
@@ -413,7 +413,7 @@
 									>{new Date(entry.created).toLocaleString()}</time
 								>
 							</div>
-							<p class="font-mono text-xs wrap-break-word whitespace-pre-wrap">{entry.message}</p>
+							<p class="text-xs wrap-break-word whitespace-pre-wrap">{entry.message}</p>
 							{#if hasData(entry)}
 								<div class="flex flex-wrap gap-1">
 									{#each dataEntries(entry) as [key, value] (key)}
@@ -463,22 +463,23 @@
 	<div class="modal-box max-w-3xl">
 		{#if selectedLog}
 			{@const meta = levelMeta(selectedLog.level)}
-			<div class="flex items-center gap-3">
-				<h2 class="text-lg font-bold">{m.logs_column_data()}</h2>
-				<span class="badge bg-base-300 badge-sm gap-1.5 border-0 font-semibold"
-					><span class={`size-2 rounded-full ${meta.dotClass}`}></span>{meta.label}</span
-				>
-			</div>
+			<h2 class="text-lg font-bold">{m.logs_column_data()}</h2>
 			<dl class="mt-4 grid items-center gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
 				<dt class="text-base-content/60">ID</dt>
-				<dd class="font-mono text-xs break-all">{selectedLog.id}</dd>
-				<dt class="text-base-content/60">{m.logs_column_time()}</dt>
-				<dd>{new Date(selectedLog.created).toLocaleString()}</dd>
+				<dd class="text-xs break-all">{selectedLog.id}</dd>
+				<dt class="text-base-content/60">{m.logs_column_level()}</dt>
+				<dd>
+					<span class="badge bg-base-300 badge-sm gap-1.5 border-0 font-semibold"
+						><span class={`size-2 rounded-full ${meta.dotClass}`}></span>{meta.label}</span
+					>
+				</dd>
 				<dt class="text-base-content/60">{m.logs_column_message()}</dt>
 				<dd class="font-mono text-xs wrap-break-word whitespace-pre-wrap">{selectedLog.message}</dd>
+				<dt class="text-base-content/60">{m.logs_column_time()}</dt>
+				<dd>{new Date(selectedLog.created).toLocaleString()}</dd>
 			</dl>
 			<pre class="bg-base-200 rounded-box mt-4 max-h-96 overflow-auto p-4 text-xs">{JSON.stringify(
-					selectedLog.data,
+					selectedLog,
 					null,
 					2
 				)}</pre>
