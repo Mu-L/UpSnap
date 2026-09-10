@@ -134,7 +134,7 @@
 	"logs_column_message": "Message",
 	"logs_column_time": "Time",
 	"logs_empty": "No logs match this filter.",
-	"logs_device_logs": "Device logs",
+	"logs_upsnap_logs": "UpSnap logs",
 	"logs_only": "Only",
 	"logs_level_all": "All levels",
 	"logs_next": "Next",

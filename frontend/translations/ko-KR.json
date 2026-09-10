@@ -6,7 +6,7 @@
 	"logs_column_message": "메시지",
 	"logs_column_time": "시간",
 	"logs_empty": "이 필터와 일치하는 로그가 없습니다.",
-	"logs_device_logs": "장치 로그",
+	"logs_upsnap_logs": "UpSnap 로그",
 	"logs_only": "만",
 	"logs_level_all": "모든 수준",
 	"logs_next": "다음",

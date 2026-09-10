@@ -6,7 +6,7 @@
 	"logs_column_message": "Съобщение",
 	"logs_column_time": "Време",
 	"logs_empty": "Няма логове, съответстващи на този филтър.",
-	"logs_device_logs": "Логове на устройството",
+	"logs_upsnap_logs": "Дневници на UpSnap",
 	"logs_only": "Само",
 	"logs_level_all": "Всички нива",
 	"logs_next": "Напред",

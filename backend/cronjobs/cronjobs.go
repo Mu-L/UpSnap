@@ -73,6 +73,8 @@ func SetPingJobs(app core.App) {
 					d.Set("status", "online")
 					if err := app.Save(d); err != nil {
 						log.Error("Failed to save device status", "device", d.GetString("name"), "error", err)
+					} else {
+						log.Info("Device turned on", "device", d.GetString("name"))
 					}
 				} else {
 					if status == "offline" {
@@ -81,6 +83,8 @@ func SetPingJobs(app core.App) {
 					d.Set("status", "offline")
 					if err := app.Save(d); err != nil {
 						log.Error("Failed to save device status", "device", d.GetString("name"), "error", err)
+					} else {
+						log.Info("Device turned off", "device", d.GetString("name"))
 					}
 				}
 			}(device)
@@ -163,7 +167,7 @@ func SetWakeShutdownJobs(app core.App) {
 					log.Error("Failed to save pending device status", "device", d.GetString("name"), "error", err)
 					return
 				}
-				if err := networking.WakeDevice(app, d); err != nil {
+				if err := networking.WakeDevice(app, d, "cron"); err != nil {
 					log.Error("Wake job failed", "device", d.GetString("name"), "error", err)
 					d.Set("status", "offline")
 				} else {
@@ -204,7 +208,7 @@ func SetWakeShutdownJobs(app core.App) {
 				if err := app.Save(d); err != nil {
 					log.Error("Failed to save pending device status", "device", d.GetString("name"), "error", err)
 				}
-				if err := networking.ShutdownDevice(app, d); err != nil {
+				if err := networking.ShutdownDevice(app, d, "cron"); err != nil {
 					log.Error("Shutdown job failed", "device", d.GetString("name"), "error", err)
 					d.Set("status", "online")
 				} else {

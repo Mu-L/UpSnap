@@ -26,7 +26,7 @@
 	let totalPages = $state(0);
 	let selectedLevel = $state('');
 	let textSearch = $state('');
-	let onlyDeviceLogs = $state(true);
+	let onlyUpSnapLogs = $state(true);
 	let sort = $state('-created');
 	let intervalSeconds = $state(5);
 	let loading = $state(true);
@@ -105,7 +105,7 @@
 		try {
 			const filters = [];
 			if (selectedLevel) filters.push(`level = ${selectedLevel}`);
-			if (onlyDeviceLogs) filters.push('data.device != null');
+			if (onlyUpSnapLogs) filters.push('data.upsnap = true');
 			if (textSearch.trim()) {
 				filters.push(
 					$pocketbase.filter('(level ?~ {:search} || message ?~ {:search} || data ?~ {:search})', {
@@ -241,12 +241,12 @@
 					</fieldset>
 
 					<fieldset class="fieldset gap-1">
-						<legend class="fieldset-legend">{m.logs_device_logs()}</legend>
+						<legend class="fieldset-legend">{m.logs_upsnap_logs()}</legend>
 						<label class="label gap-2 py-1">
 							<input
 								type="checkbox"
 								class="toggle toggle-sm"
-								bind:checked={onlyDeviceLogs}
+								bind:checked={onlyUpSnapLogs}
 								onchange={updateQuery}
 							/>
 							<span class="text-sm">{m.logs_only()}</span>
@@ -297,12 +297,12 @@
 			</fieldset>
 
 			<fieldset class="fieldset flex! shrink-0 flex-col self-stretch">
-				<legend class="fieldset-legend">{m.logs_device_logs()}</legend>
+				<legend class="fieldset-legend">{m.logs_upsnap_logs()}</legend>
 				<label class="label flex-1 gap-3">
 					<input
 						type="checkbox"
 						class="toggle"
-						bind:checked={onlyDeviceLogs}
+						bind:checked={onlyUpSnapLogs}
 						onchange={updateQuery}
 					/>
 					<span>{m.logs_only()}</span>

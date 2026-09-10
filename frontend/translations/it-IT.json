@@ -6,7 +6,7 @@
 	"logs_column_message": "Messaggio",
 	"logs_column_time": "Ora",
 	"logs_empty": "Nessun registro corrisponde a questo filtro.",
-	"logs_device_logs": "Registri del dispositivo",
+	"logs_upsnap_logs": "Registri di UpSnap",
 	"logs_only": "Solo",
 	"logs_level_all": "Tutti i livelli",
 	"logs_next": "Successivo",

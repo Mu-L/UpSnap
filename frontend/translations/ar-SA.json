@@ -6,7 +6,7 @@
 	"logs_column_message": "الرسالة",
 	"logs_column_time": "الوقت",
 	"logs_empty": "لا توجد سجلات تطابق هذا الفلتر.",
-	"logs_device_logs": "سجلات الجهاز",
+	"logs_upsnap_logs": "سجلات UpSnap",
 	"logs_only": "فقط",
 	"logs_level_all": "كل المستويات",
 	"logs_next": "التالي",

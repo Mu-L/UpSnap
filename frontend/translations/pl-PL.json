@@ -6,7 +6,7 @@
 	"logs_column_message": "Wiadomość",
 	"logs_column_time": "Czas",
 	"logs_empty": "Żadne logi nie pasują do tego filtra.",
-	"logs_device_logs": "Logi urządzenia",
+	"logs_upsnap_logs": "Dzienniki UpSnap",
 	"logs_only": "Tylko",
 	"logs_level_all": "Wszystkie poziomy",
 	"logs_next": "Następny",

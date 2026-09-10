@@ -14,9 +14,9 @@ import (
 	"github.com/seriousm4x/upsnap/logging"
 )
 
-func ShutdownDevice(app core.App, device *core.Record) error {
+func ShutdownDevice(app core.App, device *core.Record, trigger string) error {
 	log := logging.Logger(app)
-	log.Info("Shutdown triggered", "device", device.GetString("name"))
+	log.Info("Shutdown triggered", "device", device.GetString("name"), "trigger", trigger)
 	shutdown_cmd := device.GetString("shutdown_cmd")
 	if shutdown_cmd == "" {
 		return fmt.Errorf("%s: no shutdown_cmd definded", device.GetString("name"))

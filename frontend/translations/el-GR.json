@@ -6,7 +6,7 @@
 	"logs_column_message": "Μήνυμα",
 	"logs_column_time": "Ώρα",
 	"logs_empty": "Κανένα αρχείο καταγραφής δεν ταιριάζει με αυτό το φίλτρο.",
-	"logs_device_logs": "Αρχεία καταγραφής συσκευής",
+	"logs_upsnap_logs": "Αρχεία καταγραφής UpSnap",
 	"logs_only": "Μόνο",
 	"logs_level_all": "Όλα τα επίπεδα",
 	"logs_next": "Επόμενο",

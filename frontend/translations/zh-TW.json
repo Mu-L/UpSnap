@@ -6,7 +6,7 @@
 	"logs_column_message": "訊息",
 	"logs_column_time": "時間",
 	"logs_empty": "沒有日誌符合此篩選條件。",
-	"logs_device_logs": "裝置日誌",
+	"logs_upsnap_logs": "UpSnap 日誌",
 	"logs_only": "僅",
 	"logs_level_all": "所有層級",
 	"logs_next": "下一頁",

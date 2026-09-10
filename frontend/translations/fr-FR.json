@@ -6,7 +6,7 @@
 	"logs_column_message": "Message",
 	"logs_column_time": "Heure",
 	"logs_empty": "Aucun journal ne correspond à ce filtre.",
-	"logs_device_logs": "Journaux de l'appareil",
+	"logs_upsnap_logs": "Journaux UpSnap",
 	"logs_only": "Seulement",
 	"logs_level_all": "Tous les niveaux",
 	"logs_next": "Suivant",

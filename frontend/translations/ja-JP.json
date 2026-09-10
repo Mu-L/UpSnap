@@ -6,7 +6,7 @@
 	"logs_column_message": "メッセージ",
 	"logs_column_time": "時刻",
 	"logs_empty": "このフィルターに一致するログはありません。",
-	"logs_device_logs": "デバイスログ",
+	"logs_upsnap_logs": "UpSnap ログ",
 	"logs_only": "のみ",
 	"logs_level_all": "すべてのレベル",
 	"logs_next": "次へ",

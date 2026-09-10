@@ -29,7 +29,7 @@ func HandlerWake(e *core.RequestEvent) error {
 	}
 
 	if err := asyncCall(e, func() *router.ApiError {
-		if err := networking.WakeDevice(e.App, record); err != nil {
+		if err := networking.WakeDevice(e.App, record, "manual"); err != nil {
 			logging.Logger(e.App).Error("Failed to wake device", "device", record.GetString("name"), "error", err)
 			record.Set("status", "offline")
 			if err := e.App.Save(record); err != nil {
@@ -98,7 +98,7 @@ func HandlerReboot(e *core.RequestEvent) error {
 	}
 
 	if err := asyncCall(e, func() *router.ApiError {
-		if err := networking.ShutdownDevice(e.App, record); err != nil {
+		if err := networking.ShutdownDevice(e.App, record, "manual"); err != nil {
 			logging.Logger(e.App).Error("Failed to shut down device for reboot", "device", record.GetString("name"), "error", err)
 			record.Set("status", "online")
 			if err := e.App.Save(record); err != nil {
@@ -112,7 +112,7 @@ func HandlerReboot(e *core.RequestEvent) error {
 		// so we wait a little to make sure the device has shut down completely and is ready to receive wake requests.
 		time.Sleep(15 * time.Second)
 
-		if err := networking.WakeDevice(e.App, record); err != nil {
+		if err := networking.WakeDevice(e.App, record, "manual"); err != nil {
 			logging.Logger(e.App).Error("Failed to wake device after reboot", "device", record.GetString("name"), "error", err)
 			record.Set("status", "offline")
 			if err := e.App.Save(record); err != nil {
@@ -146,7 +146,7 @@ func HandlerShutdown(e *core.RequestEvent) error {
 	}
 
 	if err := asyncCall(e, func() *router.ApiError {
-		if err := networking.ShutdownDevice(e.App, record); err != nil {
+		if err := networking.ShutdownDevice(e.App, record, "manual"); err != nil {
 			logging.Logger(e.App).Error("Failed to shut down device", "device", record.GetString("name"), "error", strings.ReplaceAll(err.Error(), "\n", ""))
 			record.Set("status", "online")
 			if err := e.App.Save(record); err != nil {
@@ -183,7 +183,7 @@ func HandlerWakeGroup(e *core.RequestEvent) error {
 				logging.Logger(e.App).Error("Failed to save pending device status", "device", record.GetString("name"), "error", err)
 			}
 
-			if err := networking.WakeDevice(e.App, record); err != nil {
+			if err := networking.WakeDevice(e.App, record, "manual"); err != nil {
 				logging.Logger(e.App).Error("Failed to wake device", "device", record.GetString("name"), "error", err)
 				record.Set("status", "offline")
 				if err := e.App.Save(record); err != nil {
@@ -217,7 +217,7 @@ func HandlerShutdownGroup(e *core.RequestEvent) error {
 				logging.Logger(e.App).Error("Failed to save pending device status", "device", record.GetString("name"), "error", err)
 			}
 
-			if err := networking.ShutdownDevice(e.App, record); err != nil {
+			if err := networking.ShutdownDevice(e.App, record, "manual"); err != nil {
 				logging.Logger(e.App).Error("Failed to shut down device", "device", record.GetString("name"), "error", err)
 				record.Set("status", "online")
 				if err := e.App.Save(record); err != nil {

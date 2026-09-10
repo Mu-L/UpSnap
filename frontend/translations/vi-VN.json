@@ -6,7 +6,7 @@
 	"logs_column_message": "Thông báo",
 	"logs_column_time": "Thời gian",
 	"logs_empty": "Không có nhật ký nào khớp với bộ lọc này.",
-	"logs_device_logs": "Nhật ký thiết bị",
+	"logs_upsnap_logs": "Nhật ký UpSnap",
 	"logs_only": "Chỉ",
 	"logs_level_all": "Tất cả mức độ",
 	"logs_next": "Tiếp theo",

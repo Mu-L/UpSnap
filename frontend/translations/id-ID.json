@@ -6,7 +6,7 @@
 	"logs_column_message": "Pesan",
 	"logs_column_time": "Waktu",
 	"logs_empty": "Tidak ada log yang cocok dengan filter ini.",
-	"logs_device_logs": "Log perangkat",
+	"logs_upsnap_logs": "Log UpSnap",
 	"logs_only": "Hanya",
 	"logs_level_all": "Semua tingkat",
 	"logs_next": "Berikutnya",

@@ -6,7 +6,7 @@
 	"logs_column_message": "Повідомлення",
 	"logs_column_time": "Час",
 	"logs_empty": "Немає журналів, що відповідають цьому фільтру.",
-	"logs_device_logs": "Журнали пристрою",
+	"logs_upsnap_logs": "Журнали UpSnap",
 	"logs_only": "Лише",
 	"logs_level_all": "Усі рівні",
 	"logs_next": "Наступна",

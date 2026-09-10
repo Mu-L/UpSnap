@@ -6,7 +6,7 @@
 	"logs_column_message": "Melding",
 	"logs_column_time": "Tid",
 	"logs_empty": "Ingen logger samsvarer med dette filteret.",
-	"logs_device_logs": "Enhetslogger",
+	"logs_upsnap_logs": "UpSnap-logger",
 	"logs_only": "Kun",
 	"logs_level_all": "Alle nivåer",
 	"logs_next": "Neste",

@@ -121,13 +121,15 @@ func TrackOneSubnet(app core.App, subnet *net.IPNet) error {
 		if err != nil || !deviceSubnet.Contains(net.ParseIP(newIp)) {
 			continue
 		}
-		log.Info("Updating tracked device IP", "device", device.GetString("name"), "from", device.GetString("ip"), "to", newIp)
+		oldIP := device.GetString("ip")
 		device.Set("ip", newIp)
 		// only write the changed ip field to avoid clobbering concurrent
 		// status updates from the ping and wake/shutdown cronjobs
 		device.IgnoreUnchangedFields(true)
 		if err := app.Save(device); err != nil {
 			log.Error("Failed to save tracked device IP", "device", device.GetString("name"), "error", err)
+		} else {
+			log.Info("Device IP changed", "device", device.GetString("name"), "from", oldIP, "to", newIp)
 		}
 	}
 	return nil

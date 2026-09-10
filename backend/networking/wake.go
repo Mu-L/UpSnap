@@ -14,9 +14,9 @@ import (
 	"github.com/seriousm4x/upsnap/logging"
 )
 
-func WakeDevice(app core.App, device *core.Record) error {
+func WakeDevice(app core.App, device *core.Record, trigger string) error {
 	log := logging.Logger(app)
-	log.Info("Wake triggered", "device", device.GetString("name"))
+	log.Info("Wake triggered", "device", device.GetString("name"), "trigger", trigger)
 
 	wakeTimeout := device.GetInt("wake_timeout")
 	if wakeTimeout <= 0 {

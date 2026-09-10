@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -33,29 +34,17 @@ func ConfigureConsole(level string) error {
 	}
 
 	consoleHandler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		AddSource:   true,
-		Level:       parsed,
-		ReplaceAttr: replaceSource,
+		Level: parsed,
 	})
 	return nil
 }
 
-func replaceSource(_ []string, attr slog.Attr) slog.Attr {
-	if attr.Key != slog.SourceKey {
-		return attr
-	}
-
-	source, ok := attr.Value.Any().(*slog.Source)
-	if !ok {
-		return attr
-	}
-
-	file := strings.ReplaceAll(source.File, "\\", "/")
+func relativeSource(file string) string {
+	file = strings.ReplaceAll(file, "\\", "/")
 	if index := strings.LastIndex(file, "/backend/"); index >= 0 {
-		file = file[index+1:]
+		return file[index+1:]
 	}
-
-	return slog.String(attr.Key, file+":"+strconv.Itoa(source.Line))
+	return file
 }
 
 // Logger writes through PocketBase's logger and mirrors UpSnap logs to stdout.
@@ -64,7 +53,7 @@ func Logger(app core.App) *slog.Logger {
 	if consoleHandler != nil && !app.IsDev() {
 		handlers = append(handlers, consoleHandler)
 	}
-	return slog.New(multiHandler(handlers))
+	return slog.New(multiHandler(handlers)).With("upsnap", true)
 }
 
 type multiHandler []slog.Handler
@@ -79,6 +68,12 @@ func (h multiHandler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 func (h multiHandler) Handle(ctx context.Context, record slog.Record) error {
+	if record.PC != 0 {
+		frames := runtime.CallersFrames([]uintptr{record.PC})
+		frame, _ := frames.Next()
+		record.AddAttrs(slog.String(slog.SourceKey, relativeSource(frame.File)+":"+strconv.Itoa(frame.Line)))
+	}
+
 	var errs []error
 	for _, handler := range h {
 		if handler.Enabled(ctx, record.Level) {

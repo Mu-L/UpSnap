@@ -6,7 +6,7 @@
 	"logs_column_message": "संदेश",
 	"logs_column_time": "समय",
 	"logs_empty": "इस फ़िल्टर से कोई लॉग मेल नहीं खाता।",
-	"logs_device_logs": "डिवाइस लॉग",
+	"logs_upsnap_logs": "UpSnap लॉग",
 	"logs_only": "केवल",
 	"logs_level_all": "सभी स्तर",
 	"logs_next": "अगला",

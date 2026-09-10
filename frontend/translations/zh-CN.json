@@ -6,7 +6,7 @@
 	"logs_column_message": "消息",
 	"logs_column_time": "时间",
 	"logs_empty": "没有日志符合此筛选条件。",
-	"logs_device_logs": "设备日志",
+	"logs_upsnap_logs": "UpSnap 日志",
 	"logs_only": "仅",
 	"logs_level_all": "所有级别",
 	"logs_next": "下一页",

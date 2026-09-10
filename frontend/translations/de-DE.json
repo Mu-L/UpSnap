@@ -6,7 +6,7 @@
 	"logs_column_message": "Nachricht",
 	"logs_column_time": "Zeit",
 	"logs_empty": "Keine Protokolle entsprechen diesem Filter.",
-	"logs_device_logs": "Geräteprotokolle",
+	"logs_upsnap_logs": "UpSnap-Protokolle",
 	"logs_only": "Nur",
 	"logs_level_all": "Alle Stufen",
 	"logs_next": "Weiter",

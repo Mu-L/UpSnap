@@ -6,7 +6,7 @@
 	"logs_column_message": "Bericht",
 	"logs_column_time": "Tijd",
 	"logs_empty": "Geen logboeken komen overeen met dit filter.",
-	"logs_device_logs": "Apparaatlogboeken",
+	"logs_upsnap_logs": "UpSnap-logboeken",
 	"logs_only": "Alleen",
 	"logs_level_all": "Alle niveaus",
 	"logs_next": "Volgende",
